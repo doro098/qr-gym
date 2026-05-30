@@ -1,6 +1,7 @@
 import csv
 import io
 from datetime import datetime
+from functools import wraps
 from io import BytesIO
 
 import qrcode
@@ -12,6 +13,7 @@ from flask import (
     render_template,
     request,
     send_file,
+    session,
     url_for,
 )
 
@@ -25,6 +27,22 @@ from database import (
     obtener_clientes_vencidos,
     obtener_vencimientos_proximos,
 )
+
+
+# ========== CONFIGURACIÓN DE LOGIN ==========
+USUARIO = "admin"
+CONTRASEÑA = "1234"
+
+
+# ========== DECORADOR PARA PROTEGER RUTAS ==========
+def requiere_login(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'logueado' not in session:
+            flash("Debes iniciar sesión", "error")
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 # --- FUNCIÓN PARA GENERAR QR ---
@@ -52,13 +70,43 @@ def generar_qr_descarga(cliente_id, nombre_cliente):
 
 
 app = Flask(__name__)
-app.secret_key = "clave_secreta_para_mensajes_flash"  # Necesario para usar flash()
+app.secret_key = "clave_secreta_para_mensajes_flash_y_sesiones"
 
 with app.app_context():
     init_db()
 
 
+# ========== RUTAS DE AUTENTICACIÓN ==========
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    """Página de login"""
+    if request.method == "POST":
+        usuario = request.form.get("usuario")
+        contraseña = request.form.get("contraseña")
+        
+        if usuario == USUARIO and contraseña == CONTRASEÑA:
+            session['logueado'] = True
+            flash("¡Bienvenido!", "success")
+            return redirect(url_for("listar_clientes_html"))
+        else:
+            flash("Usuario o contraseña incorrectos", "error")
+    
+    return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    """Cierra la sesión"""
+    session.clear()
+    flash("Sesión cerrada", "success")
+    return redirect(url_for("login"))
+
+
+# ========== RUTAS PROTEGIDAS ==========
+
 @app.route("/")
+@requiere_login
 def listar_clientes_html():
     clientes = get_all_clientes()
     clientes_lista = [dict(cliente) for cliente in clientes]
@@ -80,6 +128,7 @@ def listar_clientes_html():
 
 
 @app.route("/editar/<int:cliente_id>", methods=["GET", "POST"])
+@requiere_login
 def editar_cliente(cliente_id):
     """Edita un cliente existente"""
 
@@ -116,6 +165,7 @@ def editar_cliente(cliente_id):
 
 
 @app.route("/nuevo", methods=["GET", "POST"])
+@requiere_login
 def nuevo_cliente():
     """Crea un nuevo cliente"""
 
@@ -146,6 +196,7 @@ def nuevo_cliente():
 
 
 @app.route("/eliminar/<int:cliente_id>", methods=["POST"])
+@requiere_login
 def eliminar_cliente_route(cliente_id):
     """Elimina un cliente (solo POST para seguridad)"""
     if eliminar_cliente(cliente_id):
@@ -157,6 +208,7 @@ def eliminar_cliente_route(cliente_id):
 
 
 @app.route("/vencimientos")
+@requiere_login
 def mostrar_vencimientos():
     """Muestra solo los clientes con vencimientos próximos"""
     proximos = obtener_vencimientos_proximos(30)  # Próximos 30 días
@@ -172,6 +224,7 @@ def mostrar_vencimientos():
 
 
 @app.route("/descargar_qr/<int:cliente_id>")
+@requiere_login
 def descargar_qr(cliente_id):
     """Descarga el código QR de un cliente específico"""
     cliente = get_cliente_por_id(cliente_id)
@@ -186,16 +239,41 @@ def descargar_qr(cliente_id):
     return send_file(
         buffer,
         mimetype="image/png",
-        as_attachment=True,  # Esto fuerza la descarga
+        as_attachment=True,
         download_name=f"cliente_{cliente_id}_{cliente['nombre']}.png",
     )
 
 
-@app.route("/exportar_csv")
-def exportar_csv():
-    import csv
-    import io
+@app.route("/actualizar_vencimiento/<int:cliente_id>", methods=["GET", "POST"])
+@requiere_login
+def actualizar_vencimiento(cliente_id):
+    """Actualiza solo la fecha de vencimiento de un cliente"""
 
+    cliente = get_cliente_por_id(cliente_id)
+    if not cliente:
+        flash("Cliente no encontrado", "error")
+        return redirect(url_for("listar_clientes_html"))
+
+    if request.method == "GET":
+        return render_template("actualizar_vencimiento.html", cliente=cliente)
+
+    elif request.method == "POST":
+        nueva_fecha = request.form.get("vencimiento")
+
+        if actualizar_cliente(
+            cliente_id, vencimiento=nueva_fecha if nueva_fecha else None
+        ):
+            flash("Fecha de vencimiento actualizada", "success")
+        else:
+            flash("Error al actualizar la fecha", "error")
+
+        return redirect(url_for("listar_clientes_html"))
+
+
+@app.route("/exportar_csv")
+@requiere_login
+def exportar_csv():
+    """Exporta todos los clientes a CSV"""
     clientes = get_all_clientes()
     buffer = io.StringIO()
     writer = csv.writer(buffer)
@@ -210,6 +288,7 @@ def exportar_csv():
 
 
 @app.route("/vencidos")
+@requiere_login
 def mostrar_vencidos():
     """Muestra solo los clientes vencidos"""
     vencidos = obtener_clientes_vencidos()

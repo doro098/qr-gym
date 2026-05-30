@@ -96,12 +96,22 @@
                 text-decoration: none;
                 font-size: 14px;
                 white-space: nowrap;
+                border: none;
+                cursor: pointer;
+                transition: all 0.3s ease;
             }
             .nav-btn i {
                 font-size: 16px;
             }
             .nav-btn:hover {
                 background: var(--dusk-blue-dark);
+            }
+            .nav-btn.logout {
+                background: #a32d2d;
+                margin-left: auto;
+            }
+            .nav-btn.logout:hover {
+                background: #7a1f1f;
             }
         </style>
     </head>
@@ -132,12 +142,15 @@
                 ></i
                 >QR-GYM
             </span>
-            <div style="display: flex; gap: 8px">
+            <div style="display: flex; gap: 8px; align-items: center;">
                 <a href="{{ url_for('mostrar_vencimientos') }}" class="nav-btn">
                     <i class="ti ti-calendar-event"></i>Vencimientos
                 </a>
                 <a href="{{ url_for('mostrar_vencidos') }}" class="nav-btn">
                     <i class="ti ti-calendar-x"></i>Vencidos
+                </a>
+                <a href="{{ url_for('logout') }}" class="nav-btn logout">
+                    <i class="ti ti-logout"></i>Salir
                 </a>
             </div>
         </header>
@@ -205,6 +218,11 @@
                                 href="{{ url_for('editar_cliente', cliente_id=cliente.id) }}"
                                 class="acc-btn"
                                 ><i class="ti ti-edit"></i>Editar</a
+                            >
+                            <a
+                                href="{{ url_for('actualizar_vencimiento', cliente_id=cliente.id) }}"
+                                class="acc-btn"
+                                ><i class="ti ti-calendar"></i>Vencimiento</a
                             >
                             <a
                                 href="{{ url_for('descargar_qr', cliente_id=cliente.id) }}"
