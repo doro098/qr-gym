@@ -10,6 +10,7 @@ from database import (
     eliminar_cliente,
     get_all_clientes,
     get_cliente_por_id,
+    init_db,
     obtener_clientes_vencidos,
     obtener_vencimientos_proximos,
 )
@@ -41,6 +42,9 @@ def generar_qr_descarga(cliente_id, nombre_cliente):
 
 app = Flask(__name__)
 app.secret_key = "clave_secreta_para_mensajes_flash"  # Necesario para usar flash()
+
+with app.app_context():
+    init_db()
 
 
 @app.route("/")
