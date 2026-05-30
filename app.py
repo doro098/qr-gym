@@ -1,8 +1,8 @@
 from datetime import datetime
-from io import BytesIO
-
+import io
+import csv
+from flask import Flask, flash, make_response, redirect, render_template, request, send_file, url_for
 import qrcode
-from flask import Flask, flash, redirect, render_template, request, send_file, url_for
 
 from database import (
     actualizar_cliente,
@@ -205,6 +205,22 @@ def actualizar_vencimiento(cliente_id):
 
         return redirect(url_for("listar_clientes_html"))
 
+@app.route("/exportar_csv")
+def exportar_csv():
+    import csv
+    import io
+    
+    clientes = get_all_clientes()
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(["id", "nombre", "telefono", "vencimiento"])
+    for c in clientes:
+        writer.writerow([c["id"], c["nombre"], c["telefono"], c["vencimiento"]])
+    
+    response = make_response(buffer.getvalue().encode('utf-8'))
+    response.headers["Content-Disposition"] = "attachment; filename=clientes.csv"
+    response.headers["Content-Type"] = "text/csv; charset=utf-8"
+    return response
 
 @app.route("/vencidos")
 def mostrar_vencidos():
