@@ -163,13 +163,22 @@
                 >
                     Clientes del gimnasio
                 </h2>
-                <a
-                    href="{{ url_for('nuevo_cliente') }}"
-                    class="nav-btn"
-                    style="font-size: 15px; padding: 10px 20px"
-                >
-                    <i class="ti ti-user-plus"></i>Nuevo cliente
-                </a>
+                <div style="display: flex; gap: 8px">
+                    <a
+                        href="{{ url_for('exportar_csv') }}"
+                        class="nav-btn"
+                        style="font-size: 15px; padding: 10px 20px"
+                    >
+                        <i class="ti ti-download"></i>Exportar CSV
+                    </a>
+                    <a
+                        href="{{ url_for('nuevo_cliente') }}"
+                        class="nav-btn"
+                        style="font-size: 15px; padding: 10px 20px"
+                    >
+                        <i class="ti ti-user-plus"></i>Nuevo cliente
+                    </a>
+                </div>
             </div>
 
             <table>
