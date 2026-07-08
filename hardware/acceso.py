@@ -18,6 +18,12 @@ Para ejecutar en la Raspberry:
 o
     python -m hardware.acceso
 """
+import sys
+from pathlib import Path
+
+# Añadir la carpeta raíz del proyecto al path de módulos
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 import time
 
 from config import DEBOUNCE_SEGUNDOS, PIN_CERRADURA, TIEMPO_CERRADURA
