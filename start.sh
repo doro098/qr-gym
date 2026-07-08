@@ -2,7 +2,7 @@
 # Script de inicio para QR-GYM (Raspberry Pi / Debian)
 # Busca la URL del repositorio en este orden:
 #   1. archivo repo.url
-#   2. variable de entorno REPO_URL
+#   2. variable de entorno REPO_URL_ENV
 #   3. argumento $1
 #   4. si no, y estamos en un repo git, hace git pull
 #   5. si no, usa el directorio actual
@@ -45,7 +45,14 @@ fi
 # ============================================================
 # 2. GESTIÓN DEL REPOSITORIO (clonar o actualizar)
 # ============================================================
-if [ -n "$REPO_URL" ]; then
+# CLAVE: primero chequeamos si YA estamos parados dentro de un
+# repositorio git. Si es así, actualizamos en el lugar (git pull)
+# en vez de intentar clonar/entrar a una subcarpeta con el mismo
+# nombre (eso era lo que generaba el "qr-gym-v2/qr-gym-v2" anidado).
+if git rev-parse --git-dir > /dev/null 2>&1; then
+    echo -e "${YELLOW}▶ Ya estamos dentro de un repositorio git ($(pwd)). Actualizando (git pull)...${NC}"
+    git pull
+elif [ -n "$REPO_URL" ]; then
     REPO_DIR=$(basename "$REPO_URL" .git)
     if [ -d "$REPO_DIR" ]; then
         echo -e "${YELLOW}▶ Actualizando repositorio existente en $REPO_DIR...${NC}"
@@ -57,25 +64,27 @@ if [ -n "$REPO_URL" ]; then
         cd "$REPO_DIR"
     fi
 else
-    if git rev-parse --git-dir > /dev/null 2>&1; then
-        echo -e "${YELLOW}▶ Repositorio Git detectado. Actualizando (git pull)...${NC}"
-        git pull
-    else
-        echo -e "${YELLOW}▶ No se pasó URL y no es un repositorio git. Usando directorio actual.${NC}"
-    fi
+    echo -e "${YELLOW}▶ No se pasó URL y no es un repositorio git. Usando directorio actual.${NC}"
 fi
 
 # ============================================================
 # 3. ACTUALIZAR SISTEMA E INSTALAR PAQUETES APT
 # ============================================================
+echo -e "${YELLOW}▶ Actualizando repositorios apt...${NC}"
+sudo apt update -qq && sudo apt upgrade -y -qq
+echo -e "${GREEN}✔ Sistema actualizado.${NC}"
+
 if [ -f "system-requirements.txt" ]; then
     echo -e "${YELLOW}▶ Instalando paquetes del sistema desde system-requirements.txt...${NC}"
-    while read -r pkg; do
-        # Saltar líneas vacías
-        [ -z "$pkg" ] && continue
-        sudo apt install -y "$pkg" 2>/dev/null || echo "   ✘ No se pudo instalar $pkg (quizás ya está instalado)"
-    done < system-requirements.txt
-    echo -e "${GREEN}✔ Instalación de paquetes del sistema finalizada.${NC}"
+    # Filtramos líneas vacías y comentarios (#), y limpiamos \r (CRLF)
+    # por si el archivo fue editado en Windows en algún momento
+    PACKAGES=$(tr -d '\r' < system-requirements.txt | grep -vE '^\s*(#|$)' | tr '\n' ' ')
+    if [ -n "$PACKAGES" ]; then
+        sudo apt install -y $PACKAGES
+        echo -e "${GREEN}✔ Paquetes del sistema instalados.${NC}"
+    else
+        echo -e "${YELLOW}⚠️  system-requirements.txt está vacío, omitiendo.${NC}"
+    fi
 else
     echo -e "${RED}✘ No se encontró system-requirements.txt en $(pwd)${NC}"
     exit 1
@@ -93,7 +102,7 @@ else
 fi
 
 # ============================================================
-# 5. INSTALAR DEPENDENCIAS PIP FALTANTES (solo nanoid)
+# 5. INSTALAR DEPENDENCIAS PIP FALTANTES
 # ============================================================
 echo -e "${YELLOW}▶ Instalando dependencias pip desde requirements.txt...${NC}"
 source "$VENV_DIR/bin/activate"
