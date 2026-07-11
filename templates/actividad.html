@@ -1,37 +1,20 @@
-<!doctype html>
-<html>
-<head>
-    <title>Actividad — QR-GYM</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <header style="display:flex; align-items:center; justify-content:space-between; padding:1rem 1.5rem; background:var(--prussian-blue); box-shadow:0 2px 8px rgba(7,31,53,0.15);">
-        <a href="{{ url_for('inicio') }}" style="display:flex; align-items:center; gap:10px; font-size:20px; font-weight:500; color:var(--white); text-decoration:none;">
-            <i class="ti ti-qrcode" style="font-size:28px; color:var(--linen);"></i>QR-GYM
-        </a>
-        <div style="display:flex; gap:8px; align-items:center;">
-            <a href="{{ url_for('inicio') }}" class="nav-btn"><i class="ti ti-home"></i>Inicio</a>
-            <a href="{{ url_for('listar_clientes_html') }}" class="nav-btn"><i class="ti ti-users"></i>Clientes</a>
-            <a href="{{ url_for('mostrar_actividad') }}" class="nav-btn active"><i class="ti ti-history"></i>Actividad</a>
-            <a href="{{ url_for('mostrar_vencimientos') }}" class="nav-btn"><i class="ti ti-calendar-event"></i>Vencimientos</a>
-            <a href="{{ url_for('mostrar_estadisticas') }}" class="nav-btn"><i class="ti ti-chart-bar"></i>Estadísticas</a>
-            <a href="{{ url_for('logout') }}" class="nav-btn logout"><i class="ti ti-logout"></i>Salir</a>
-        </div>
-    </header>
+{% extends "base.html" %}
 
+{% block title %}Actividad — QR-GYM{% endblock %}
+
+{% block content %}
     <div class="subheader">
         <h2>
             <i class="ti ti-history"></i>Actividad del sistema
-            <span class="count-chip">{{ logs|length }} eventos</span>
+            <span class="count-chip">{{ total }} eventos</span>
         </h2>
         <div style="display:flex; gap:12px; align-items:center;">
-            <span class="refresh-indicator"><i class="ti ti-refresh"></i>Auto-refresh: 30s</span>
             <a href="{{ url_for('mostrar_actividad') }}" class="nav-btn secondary"><i class="ti ti-refresh"></i>Refrescar</a>
         </div>
     </div>
 
     <main>
+
         <table>
             <thead>
                 <tr>
@@ -40,13 +23,14 @@
                     <th>Tipo</th>
                     <th>Descripción</th>
                     <th>Resultado</th>
+                    <th>Disciplina</th>
                 </tr>
             </thead>
             <tbody>
                 {% for log in logs %}
                 <tr class="{% if log.resultado == 'EXITO' %}log-exito{% elif log.resultado == 'DENEGADO' %}log-denegado{% elif log.resultado == 'ERROR' %}log-error{% endif %}">
                     <td style="color:#999; font-size:12px;">{{ log.id }}</td>
-                    <td style="white-space:nowrap; font-variant-numeric:tabular-nums;">{{ log.fecha }}</td>
+                    <td style="white-space:nowrap;">{{ log.fecha }}</td>
                     <td>
                         <span class="badge {% if log.tipo == 'ACCESO' %}badge-acceso{% else %}badge-sistema{% endif %}">
                             <i class="ti {% if log.tipo == 'ACCESO' %}ti-qrcode{% else %}ti-settings{% endif %}" style="font-size:11px;"></i>
@@ -60,23 +44,51 @@
                             {{ log.resultado }}
                         </span>
                     </td>
+                    <td>
+                        {% if log.disciplina %}
+                            <span class="badge badge-acceso">{{ log.disciplina }}</span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5">
+                    <td colspan="6">
                         <div class="empty-state">
                             <i class="ti ti-history-off"></i>
-                            No hay eventos registrados aún.
+                            No hay eventos en este día.
                         </div>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-    </main>
 
-    <script>
-        setTimeout(function() { location.reload(); }, 30000);
-    </script>
-</body>
-</html>
+        <!-- PAGINACIÓN por días -->
+        {% if total_pages > 1 %}
+        <div style="display: flex; justify-content: center; gap: 8px; margin-top: 1.5rem; flex-wrap: wrap;">
+            {% if page > 1 %}
+                <a href="{{ url_for('mostrar_actividad', page=page-1) }}" class="nav-btn secondary"><i class="ti ti-chevron-left"></i> Anterior</a>
+            {% endif %}
+
+            {% for p in range(1, total_pages + 1) %}
+                {% if p == page %}
+                    <span class="nav-btn active" style="background: var(--dusk-blue); color: white; cursor: default;">{{ p }}</span>
+                {% elif p == 1 or p == total_pages or (p >= page-3 and p <= page+3) %}
+                    <a href="{{ url_for('mostrar_actividad', page=p) }}" class="nav-btn secondary">{{ p }}</a>
+                {% elif p == page-4 or p == page+4 %}
+                    <span style="color: #999;">…</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if page < total_pages %}
+                <a href="{{ url_for('mostrar_actividad', page=page+1) }}" class="nav-btn secondary">Siguiente <i class="ti ti-chevron-right"></i></a>
+            {% endif %}
+        </div>
+        <div style="text-align: center; margin-top: 0.5rem; font-size: 13px; color: #888;">
+            Página {{ page }} de {{ total_pages }} (días con actividad)
+        </div>
+        {% endif %}
+    </main>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva Disciplina — QR-GYM{% endblock %}
+
+{% block content %}
+    <div class="form-card">
+        <h2><i class="ti ti-plus" style="color:var(--dusk-blue);"></i>Nueva disciplina</h2>
+        <form method="POST">
+            <div class="form-group">
+                <label><i class="ti ti-tag"></i> Nombre</label>
+                <input type="text" name="nombre" required autofocus>
+            </div>
+            <div class="form-group">
+                <label><i class="ti ti-notes"></i> Descripción</label>
+                <input type="text" name="descripcion">
+            </div>
+
+            <h3>Horarios</h3>
+            <div id="horarios">
+                <div class="horario-row" style="display:flex; gap:10px; margin-bottom:8px;">
+                    <select name="dia_semana" style="flex:1; padding:8px;">
+                        <option value="0">Lunes</option>
+                        <option value="1">Martes</option>
+                        <option value="2">Miércoles</option>
+                        <option value="3">Jueves</option>
+                        <option value="4">Viernes</option>
+                        <option value="5">Sábado</option>
+                        <option value="6">Domingo</option>
+                    </select>
+                    <input type="time" name="hora_inicio" style="flex:1;" required>
+                    <input type="time" name="hora_fin" style="flex:1;" required>
+                    <button type="button" onclick="eliminarHorario(this)" class="acc-btn danger" style="padding:8px 12px;">✕</button>
+                </div>
+            </div>
+            <button type="button" onclick="agregarHorario()" class="nav-btn" style="margin-bottom:1.5rem;"><i class="ti ti-plus"></i>Agregar horario</button>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-submit"><i class="ti ti-device-floppy"></i>Crear</button>
+                <a href="{{ url_for('listar_disciplinas') }}" class="btn-cancel"><i class="ti ti-x"></i>Cancelar</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        function agregarHorario() {
+            const container = document.getElementById('horarios');
+            const row = container.querySelector('.horario-row').cloneNode(true);
+            row.querySelectorAll('input, select').forEach(el => el.value = '');
+            container.appendChild(row);
+        }
+        function eliminarHorario(btn) {
+            const row = btn.closest('.horario-row');
+            if (document.querySelectorAll('.horario-row').length > 1) {
+                row.remove();
+            } else {
+                alert('Debe haber al menos un horario.');
+            }
+        }
+    </script>
+{% endblock %}

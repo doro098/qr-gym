@@ -1,10 +1,5 @@
 """
-Rutas de gestión de clientes:
-- /                  (listar)
-- /nuevo             (GET formulario, POST crear)
-- /editar/<id>       (GET formulario, POST actualizar)
-- /eliminar/<id>     (POST eliminar)
-- /vencimientos      (listar próximos a vencer)
+Rutas de gestión de clientes.
 """
 from datetime import datetime
 
@@ -19,6 +14,11 @@ from db.repo_clientes import (
     obtener_vencimientos_proximos,
 )
 from db.repo_logs import registrar_evento
+from db.repo_disciplinas import (
+    obtener_disciplinas,
+    obtener_disciplinas_de_cliente,
+    reemplazar_disciplinas_de_cliente,
+)
 from routes.auth import requiere_login
 
 
@@ -28,11 +28,8 @@ def register(app):
     def listar_clientes_html():
         clientes = get_all_clientes()
         clientes_lista = [dict(cliente) for cliente in clientes]
-
-        # Obtener vencimientos próximos
         proximos_vencimientos = obtener_vencimientos_proximos(7)
         ids_proximos = [c["id"] for c in proximos_vencimientos]
-
         return render_template(
             "clientes.html",
             clientes=clientes_lista,
@@ -43,20 +40,29 @@ def register(app):
     @app.route("/editar/<int:cliente_id>", methods=["GET", "POST"])
     @requiere_login
     def editar_cliente(cliente_id):
-        """Edita un cliente existente"""
+        cliente = get_cliente_por_id(cliente_id)
+        if not cliente:
+            flash("Cliente no encontrado", "error")
+            return redirect(url_for("listar_clientes_html"))
 
         if request.method == "GET":
-            cliente = get_cliente_por_id(cliente_id)
-            if not cliente:
-                flash("Cliente no encontrado", "error")
-                return redirect(url_for("listar_clientes_html"))
-            return render_template("editar_cliente.html", cliente=cliente)
+            # Obtener disciplinas disponibles y las del cliente
+            todas = obtener_disciplinas()
+            del_cliente = obtener_disciplinas_de_cliente(cliente_id)
+            ids_del_cliente = [d["id"] for d in del_cliente]
+            return render_template(
+                "editar_cliente.html",
+                cliente=cliente,
+                disciplinas=todas,
+                disciplinas_cliente=ids_del_cliente,
+            )
 
         # POST
         nombre = request.form.get("nombre")
         apellido = request.form.get("apellido")
         telefono = request.form.get("telefono")
         vencimiento = request.form.get("vencimiento")
+        disciplinas_seleccionadas = request.form.getlist("disciplinas")  # lista de ids
 
         if not nombre:
             flash("El nombre es obligatorio", "error")
@@ -69,6 +75,10 @@ def register(app):
             telefono=telefono,
             vencimiento=vencimiento if vencimiento else None,
         )
+
+        # Reemplazar disciplinas
+        ids_int = [int(x) for x in disciplinas_seleccionadas if x.isdigit()]
+        reemplazar_disciplinas_de_cliente(cliente_id, ids_int)
 
         registrar_evento(
             tipo="SISTEMA",
@@ -83,16 +93,15 @@ def register(app):
     @app.route("/nuevo", methods=["GET", "POST"])
     @requiere_login
     def nuevo_cliente():
-        """Crea un nuevo cliente"""
-
         if request.method == "GET":
-            return render_template("nuevo_cliente.html")
+            todas = obtener_disciplinas()
+            return render_template("nuevo_cliente.html", disciplinas=todas)
 
-        # POST
         nombre = request.form.get("nombre")
         apellido = request.form.get("apellido")
         telefono = request.form.get("telefono")
         vencimiento = request.form.get("vencimiento")
+        disciplinas_seleccionadas = request.form.getlist("disciplinas")
 
         if not nombre:
             flash("El nombre es obligatorio", "error")
@@ -104,6 +113,11 @@ def register(app):
             telefono=telefono,
             vencimiento=vencimiento if vencimiento else None,
         )
+
+        ids_int = [int(x) for x in disciplinas_seleccionadas if x.isdigit()]
+        if ids_int:
+            from db.repo_disciplinas import reemplazar_disciplinas_de_cliente
+            reemplazar_disciplinas_de_cliente(nuevo_id, ids_int)
 
         registrar_evento(
             tipo="SISTEMA",
@@ -118,7 +132,6 @@ def register(app):
     @app.route("/eliminar/<int:cliente_id>", methods=["POST"])
     @requiere_login
     def eliminar_cliente_route(cliente_id):
-        """Elimina un cliente (solo POST para seguridad)"""
         cliente = get_cliente_por_id(cliente_id)
         nombre = cliente["nombre"] if cliente else "desconocido"
 
@@ -146,14 +159,11 @@ def register(app):
     @app.route("/vencimientos")
     @requiere_login
     def mostrar_vencimientos():
-        """Muestra solo los clientes con vencimientos próximos"""
-        proximos = obtener_vencimientos_proximos(30)  # Próximos 30 días
-
+        proximos = obtener_vencimientos_proximos(30)
         hoy = datetime.now().date()
         for cliente in proximos:
             if cliente["vencimiento"]:
                 fecha_venc = datetime.strptime(cliente["vencimiento"], "%Y-%m-%d").date()
                 dias_restantes = (fecha_venc - hoy).days
                 cliente["dias_restantes"] = dias_restantes
-
         return render_template("vencimientos.html", clientes=proximos)

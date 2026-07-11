@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Disciplinas — QR-GYM{% endblock %}
+
+{% block content %}
+    <div class="subheader">
+        <h2><i class="ti ti-tags"></i>Disciplinas</h2>
+        <div>
+            <a href="{{ url_for('nueva_disciplina') }}" class="nav-btn" style="font-size:15px; padding:10px 20px;">
+                <i class="ti ti-plus"></i>Nueva disciplina
+            </a>
+        </div>
+    </div>
+
+    <main>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Horarios</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in disciplinas %}
+                <tr>
+                    <td>{{ d.id }}</td>
+                    <td>{{ d.nombre }}</td>
+                    <td>{{ d.descripcion or '-' }}</td>
+                    <td>
+                        {% for h in d.horarios %}
+                            {% set dias = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'] %}
+                            {{ dias[h.dia_semana] }} {{ h.hora_inicio }}-{{ h.hora_fin }}{% if not loop.last %}, {% endif %}
+                        {% else %}
+                            Sin horarios
+                        {% endfor %}
+                    </td>
+                    <td class="acciones">
+                        <a href="{{ url_for('editar_disciplina', disciplina_id=d.id) }}" class="acc-btn"><i class="ti ti-edit"></i>Editar</a>
+                        <form method="POST" action="{{ url_for('eliminar_disciplina_route', disciplina_id=d.id) }}" style="display:inline;">
+                            <button type="submit" class="acc-btn danger" onclick="return confirm('¿Eliminar esta disciplina?')">
+                                <i class="ti ti-trash"></i>Eliminar
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5"><div class="empty-state"><i class="ti ti-tags-off"></i>No hay disciplinas</div></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </main>
+{% endblock %}

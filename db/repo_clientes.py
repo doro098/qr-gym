@@ -1,22 +1,17 @@
 """
 CRUD de clientes y verificación de acceso.
-
-Funciones:
-- Crear / actualizar / eliminar cliente
-- Lookup por id (entero) o por codigo_qr (NanoId)
-- Verificación de acceso (vencimiento)
-- Listados: todos, vencidos, próximos a vencer
 """
 from datetime import datetime, timedelta
 
 from db.connection import get_db_connection
 from db.nanoid_util import generar_codigo_qr_unico
+from db.repo_disciplinas import cliente_tiene_disciplina_activa, obtener_disciplinas_de_cliente
 
 
 # ========== Crear / actualizar / eliminar ==========
+# (sin cambios en estas funciones, se mantienen igual)
 
 def crear_cliente(nombre, apellido=None, telefono=None, vencimiento=None):
-    """Crea un cliente. Genera su codigo_qr (NanoId único) automáticamente."""
     codigo_qr = generar_codigo_qr_unico()
     with get_db_connection() as conn:
         cursor = conn.cursor()
@@ -29,10 +24,7 @@ def crear_cliente(nombre, apellido=None, telefono=None, vencimiento=None):
         return cursor.lastrowid
 
 
-def actualizar_cliente(
-    cliente_id, nombre=None, apellido=None, telefono=None, vencimiento=None
-):
-    """Actualiza los campos pasados (los None se ignoran)."""
+def actualizar_cliente(cliente_id, nombre=None, apellido=None, telefono=None, vencimiento=None):
     with get_db_connection() as conn:
         cursor = conn.cursor()
         campos, valores = [], []
@@ -65,7 +57,6 @@ def eliminar_cliente(cliente_id):
 
 
 # ========== Lookups ==========
-
 def get_all_clientes():
     with get_db_connection() as conn:
         cursor = conn.cursor()
@@ -82,10 +73,6 @@ def get_cliente_por_id(cliente_id):
 
 
 def get_cliente_por_codigo_qr(codigo_qr):
-    """
-    Devuelve el cliente cuyo codigo_qr coincide exactamente, o None si no existe.
-    Es la función que usa el scanner al leer un QR.
-    """
     if not codigo_qr:
         return None
     with get_db_connection() as conn:
@@ -97,13 +84,8 @@ def get_cliente_por_codigo_qr(codigo_qr):
         return dict(cliente) if cliente else None
 
 
-# ========== Verificación de acceso ==========
-
+# ========== Verificación de acceso (original, solo vencimiento) ==========
 def cliente_tiene_acceso(cliente_id):
-    """
-    Devuelve True si el cliente existe y su vencimiento es hoy o futuro.
-    Una sola consulta SQL, sin traer nada a memoria.
-    """
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -118,20 +100,55 @@ def cliente_tiene_acceso(cliente_id):
 
 
 def cliente_tiene_acceso_por_codigo(codigo_qr):
-    """
-    Igual que cliente_tiene_acceso, pero lookup por codigo_qr.
-    Devuelve (tiene_acceso: bool, cliente: dict|None).
-    """
     cliente = get_cliente_por_codigo_qr(codigo_qr)
     if not cliente:
         return False, None
     return cliente_tiene_acceso(cliente["id"]), cliente
 
 
-# ========== Listados de vencimientos ==========
+# ========== NUEVA: Verificación completa (vencimiento + disciplina) ==========
+def verificar_acceso_completo(codigo_qr):
+    """
+    Verifica acceso de un cliente según su código QR.
 
+    Reglas:
+    1. El cliente debe existir.
+    2. Vencimiento: si tiene fecha, debe ser >= hoy; si es NULL, se considera vigente.
+    3. Disciplinas:
+       - Si el cliente NO tiene disciplinas asignadas → acceso libre (solo vencimiento).
+       - Si tiene disciplinas, al menos una debe tener un horario activo
+         en el día y hora actuales.
+
+    Devuelve: (permitido: bool, mensaje: str, cliente_id: int|None, disciplina_nombre: str|None)
+    """
+    cliente = get_cliente_por_codigo_qr(codigo_qr)
+    if not cliente:
+        return False, f"QR no reconocido: {codigo_qr}", None, None
+
+    cliente_id = cliente["id"]
+    nombre = cliente["nombre"]
+    vencimiento = cliente.get("vencimiento")
+
+    # --- Verificar vencimiento ---
+    if vencimiento is not None and vencimiento < datetime.now().date().isoformat():
+        return False, f"ACCESO DENEGADO — {nombre} (vencido: {vencimiento})", cliente_id, None
+
+    # Vencimiento OK (NULL o fecha futura)
+    # --- Verificar disciplinas ---
+    disciplinas = obtener_disciplinas_de_cliente(cliente_id)
+    if not disciplinas:
+        # Sin disciplinas → acceso libre
+        return True, f"ACCESO PERMITIDO — {nombre} (vence: {vencimiento or 'sin fecha'})", cliente_id, None
+
+    # Tiene disciplinas → verificar si alguna está activa ahora
+    tiene_activa, nombre_disciplina = cliente_tiene_disciplina_activa(cliente_id)
+    if tiene_activa:
+        return True, f"ACCESO PERMITIDO — {nombre} ({nombre_disciplina} activa)", cliente_id, nombre_disciplina
+    else:
+        return False, f"ACCESO DENEGADO — {nombre} (ninguna disciplina activa)", cliente_id, None
+
+# ========== Listados de vencimientos ==========
 def obtener_vencimientos_proximos(dias=7):
-    """Clientes cuyo vencimiento cae entre hoy y los próximos X días."""
     limite = (datetime.now().date() + timedelta(days=dias)).isoformat()
     hoy = datetime.now().date().isoformat()
     with get_db_connection() as conn:
@@ -149,7 +166,6 @@ def obtener_vencimientos_proximos(dias=7):
 
 
 def obtener_clientes_vencidos():
-    """Clientes cuyo vencimiento ya pasó."""
     hoy = datetime.now().date().isoformat()
     with get_db_connection() as conn:
         cursor = conn.cursor()

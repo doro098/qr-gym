@@ -1,15 +1,9 @@
 """
 Paquete db: acceso a la base de datos SQLite.
-
-Submódulos:
-- connection:     get_db_connection, init_db
-- nanoid_util:    generación de NanoIds únicos
-- repo_clientes:  CRUD de clientes + verificación de acceso
-- repo_logs:      registro y consulta de eventos
-- estadisticas:   agregados para dashboard
 """
 from db.connection import DB_NAME, get_db_connection, init_db
 from db.nanoid_util import generar_codigo_qr_unico
+from db.estadisticas import obtener_datos_inicio, obtener_estadisticas
 from db.repo_clientes import (
     actualizar_cliente,
     cliente_tiene_acceso,
@@ -21,9 +15,31 @@ from db.repo_clientes import (
     get_cliente_por_id,
     obtener_clientes_vencidos,
     obtener_vencimientos_proximos,
+    verificar_acceso_completo,
 )
-from db.repo_logs import obtener_historial, registrar_evento
-from db.estadisticas import obtener_datos_inicio, obtener_estadisticas
+from db.repo_logs import (
+    obtener_historial,
+    registrar_evento,
+    contar_logs,
+    obtener_dias_con_logs,
+    obtener_logs_por_dia
+)
+from db.repo_disciplinas import (
+    crear_disciplina,
+    obtener_disciplinas,
+    obtener_disciplina_por_id,
+    actualizar_disciplina,
+    eliminar_disciplina,
+    agregar_horario,
+    eliminar_horario,
+    obtener_horarios_por_disciplina,
+    asignar_disciplina_a_cliente,
+    remover_disciplina_de_cliente,
+    obtener_disciplinas_de_cliente,
+    reemplazar_disciplinas_de_cliente,
+    cliente_tiene_disciplina_activa,
+    obtener_disciplinas_con_horarios,
+)
 
 __all__ = [
     "DB_NAME",
@@ -40,8 +56,26 @@ __all__ = [
     "get_cliente_por_id",
     "obtener_clientes_vencidos",
     "obtener_vencimientos_proximos",
+    "verificar_acceso_completo",
     "obtener_historial",
     "registrar_evento",
+    "contar_logs",
+    "obtener_dias_con_logs",
+    "obtener_logs_por_dia",
     "obtener_datos_inicio",
     "obtener_estadisticas",
+    "crear_disciplina",
+    "obtener_disciplinas",
+    "obtener_disciplina_por_id",
+    "actualizar_disciplina",
+    "eliminar_disciplina",
+    "agregar_horario",
+    "eliminar_horario",
+    "obtener_horarios_por_disciplina",
+    "asignar_disciplina_a_cliente",
+    "remover_disciplina_de_cliente",
+    "obtener_disciplinas_de_cliente",
+    "reemplazar_disciplinas_de_cliente",
+    "cliente_tiene_disciplina_activa",
+    "obtener_disciplinas_con_horarios",
 ]

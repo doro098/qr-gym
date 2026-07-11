@@ -1,25 +1,8 @@
-<!doctype html>
-<html>
-<head>
-    <title>Editar Cliente — QR-GYM</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <header style="display:flex; align-items:center; justify-content:space-between; padding:1rem 1.5rem; background:var(--prussian-blue); box-shadow:0 2px 8px rgba(7,31,53,0.15);">
-        <a href="{{ url_for('inicio') }}" style="display:flex; align-items:center; gap:10px; font-size:20px; font-weight:500; color:var(--white); text-decoration:none;">
-            <i class="ti ti-qrcode" style="font-size:28px; color:var(--linen);"></i>QR-GYM
-        </a>
-        <div style="display:flex; gap:8px; align-items:center;">
-            <a href="{{ url_for('inicio') }}" class="nav-btn"><i class="ti ti-home"></i>Inicio</a>
-            <a href="{{ url_for('listar_clientes_html') }}" class="nav-btn active"><i class="ti ti-users"></i>Clientes</a>
-            <a href="{{ url_for('mostrar_actividad') }}" class="nav-btn"><i class="ti ti-history"></i>Actividad</a>
-            <a href="{{ url_for('mostrar_vencimientos') }}" class="nav-btn"><i class="ti ti-calendar-event"></i>Vencimientos</a>
-            <a href="{{ url_for('mostrar_estadisticas') }}" class="nav-btn"><i class="ti ti-chart-bar"></i>Estadísticas</a>
-            <a href="{{ url_for('logout') }}" class="nav-btn logout"><i class="ti ti-logout"></i>Salir</a>
-        </div>
-    </header>
+{% extends "base.html" %}
 
+{% block title %}Editar Cliente — QR-GYM{% endblock %}
+
+{% block content %}
     <div class="form-card">
         <h2><i class="ti ti-user-edit" style="color:var(--dusk-blue);"></i>Editar cliente</h2>
         <form method="POST">
@@ -39,11 +22,24 @@
                 <label for="vencimiento"><i class="ti ti-calendar"></i> Vencimiento</label>
                 <input type="date" id="vencimiento" name="vencimiento" value="{{ cliente.vencimiento or '' }}">
             </div>
+
+            <div class="form-group">
+                <label><i class="ti ti-tags"></i> Disciplinas</label>
+                <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                    {% for d in disciplinas %}
+                    <label style="display:flex; align-items:center; gap:5px; font-weight:normal;">
+                        <input type="checkbox" name="disciplinas" value="{{ d.id }}" {% if d.id in disciplinas_cliente %}checked{% endif %}>
+                        {{ d.nombre }}
+                    </label>
+                    {% endfor %}
+                </div>
+                <small style="color:#999;">Si no selecciona ninguna, el acceso solo dependerá del vencimiento.</small>
+            </div>
+
             <div class="form-actions">
                 <button type="submit" class="btn-submit"><i class="ti ti-device-floppy"></i>Guardar cambios</button>
                 <a href="{{ url_for('listar_clientes_html') }}" class="btn-cancel"><i class="ti ti-x"></i>Cancelar</a>
             </div>
         </form>
     </div>
-</body>
-</html>
+{% endblock %}

@@ -1,243 +1,138 @@
-<!doctype html>
-<html>
-    <head>
-        <title>Estadísticas — QR-GYM</title>
-        <link
-            rel="stylesheet"
-            href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"
-        />
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    </head>
-    <body>
-        <header
-            style="
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 1rem 1.5rem;
-                background: var(--prussian-blue);
-                box-shadow: 0 2px 8px rgba(7, 31, 53, 0.15);
-            "
-        >
-            <a href="{{ url_for('inicio') }}" style="display:flex; align-items:center; gap:10px; font-size:20px; font-weight:500; color:var(--white); text-decoration:none;">
-                <i class="ti ti-qrcode" style="font-size:28px; color:var(--linen);"></i>QR-GYM
-            </a>
-            <div style="display:flex; gap:8px; align-items:center;">
-                <a href="{{ url_for('inicio') }}" class="nav-btn"><i class="ti ti-home"></i>Inicio</a>
-                <a href="{{ url_for('listar_clientes_html') }}" class="nav-btn"><i class="ti ti-users"></i>Clientes</a>
-                <a href="{{ url_for('mostrar_actividad') }}" class="nav-btn"><i class="ti ti-history"></i>Actividad</a>
-                <a href="{{ url_for('mostrar_vencimientos') }}" class="nav-btn"><i class="ti ti-calendar-event"></i>Vencimientos</a>
-                <a href="{{ url_for('mostrar_estadisticas') }}" class="nav-btn active"><i class="ti ti-chart-bar"></i>Estadísticas</a>
-                <a href="{{ url_for('logout') }}" class="nav-btn logout"><i class="ti ti-logout"></i>Salir</a>
-            </div>
-        </header>
+{% extends "base.html" %}
 
-        <div class="subheader">
-            <h2><i class="ti ti-chart-bar"></i>Estadísticas del sistema</h2>
+{% block title %}Estadísticas — QR-GYM{% endblock %}
+
+{% block head_extra %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="subheader">
+        <h2><i class="ti ti-chart-bar"></i>Estadísticas del sistema</h2>
+    </div>
+
+    <main>
+        <!-- STAT CARDS -->
+        <div class="stat-cards">
+            <div class="stat-card">
+                <div class="label"><i class="ti ti-users"></i>Clientes totales</div>
+                <div class="value">{{ stats.total_clientes }}</div>
+                <div class="sub">registrados</div>
+            </div>
+            <div class="stat-card">
+                <div class="label"><i class="ti ti-door-enter"></i>Accesos hoy</div>
+                <div class="value">{{ stats.accesos_hoy }}</div>
+                <div class="sub">{{ stats.fecha_hoy }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label"><i class="ti ti-calendar-stats"></i>Accesos este mes</div>
+                <div class="value">{{ stats.accesos_mes }}</div>
+                <div class="sub">{{ stats.mes_actual }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label"><i class="ti ti-ban"></i>Denegados este mes</div>
+                <div class="value">{{ stats.denegados_mes }}</div>
+                <div class="sub">accesos rechazados</div>
+            </div>
+            <div class="stat-card">
+                <div class="label"><i class="ti ti-calendar-x"></i>Clientes vencidos</div>
+                <div class="value">{{ stats.clientes_vencidos }}</div>
+                <div class="sub">membresía expirada</div>
+            </div>
+            <div class="stat-card">
+                <div class="label"><i class="ti ti-clock"></i>Hora pico</div>
+                <div class="value">{{ stats.hora_pico }}</div>
+                <div class="sub">más accesos histórico</div>
+            </div>
         </div>
 
-        <main>
-            <!-- STAT CARDS -->
-            <div class="stat-cards">
-                <div class="stat-card">
-                    <div class="label">
-                        <i class="ti ti-users"></i>Clientes totales
-                    </div>
-                    <div class="value">{{ stats.total_clientes }}</div>
-                    <div class="sub">registrados</div>
-                </div>
-                <div class="stat-card">
-                    <div class="label">
-                        <i class="ti ti-door-enter"></i>Accesos hoy
-                    </div>
-                    <div class="value">{{ stats.accesos_hoy }}</div>
-                    <div class="sub">{{ stats.fecha_hoy }}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="label">
-                        <i class="ti ti-calendar-stats"></i>Accesos este mes
-                    </div>
-                    <div class="value">{{ stats.accesos_mes }}</div>
-                    <div class="sub">{{ stats.mes_actual }}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="label">
-                        <i class="ti ti-ban"></i>Denegados este mes
-                    </div>
-                    <div class="value">{{ stats.denegados_mes }}</div>
-                    <div class="sub">accesos rechazados</div>
-                </div>
-                <div class="stat-card">
-                    <div class="label">
-                        <i class="ti ti-calendar-x"></i>Clientes vencidos
-                    </div>
-                    <div class="value">{{ stats.clientes_vencidos }}</div>
-                    <div class="sub">membresía expirada</div>
-                </div>
-                <div class="stat-card">
-                    <div class="label">
-                        <i class="ti ti-clock"></i>Hora pico
-                    </div>
-                    <div class="value">{{ stats.hora_pico }}</div>
-                    <div class="sub">más accesos histórico</div>
-                </div>
+        <!-- CHARTS -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3><i class="ti ti-chart-bar"></i>Accesos por día de la semana</h3>
+                <div class="chart-wrap"><canvas id="chartDias"></canvas></div>
             </div>
-
-            <!-- CHARTS -->
-            <div class="charts-grid">
-                <!-- Accesos por día de la semana -->
-                <div class="chart-card">
-                    <h3>
-                        <i class="ti ti-chart-bar"></i>Accesos por día de la
-                        semana
-                    </h3>
-                    <div class="chart-wrap">
-                        <canvas id="chartDias"></canvas>
-                    </div>
-                </div>
-
-                <!-- Accesos por hora del día -->
-                <div class="chart-card">
-                    <h3><i class="ti ti-clock"></i>Accesos por hora del día</h3>
-                    <div class="chart-wrap">
-                        <canvas id="chartHoras"></canvas>
-                    </div>
-                </div>
-
-                <!-- Top clientes por accesos mensuales -->
-                <div class="chart-card">
-                    <h3>
-                        <i class="ti ti-trophy"></i>Top 10 clientes — accesos
-                        este mes
-                    </h3>
-                    <div class="chart-wrap">
-                        <canvas id="chartTopClientes"></canvas>
-                    </div>
-                </div>
-
-                <!-- Resultado de accesos torta -->
-                <div class="chart-card">
-                    <h3>
-                        <i class="ti ti-chart-pie"></i>Resultados de accesos
-                        (último mes)
-                    </h3>
-                    <div class="chart-wrap">
-                        <canvas id="chartResultados"></canvas>
-                    </div>
-                </div>
-
-                <!-- Accesos últimos 14 días -->
-                <div class="chart-card" style="grid-column: 1 / -1">
-                    <h3>
-                        <i class="ti ti-trending-up"></i>Accesos — últimos 14
-                        días
-                    </h3>
-                    <div class="chart-wrap" style="height: 200px">
-                        <canvas id="chartLinea"></canvas>
-                    </div>
-                </div>
+            <div class="chart-card">
+                <h3><i class="ti ti-clock"></i>Accesos por hora del día</h3>
+                <div class="chart-wrap"><canvas id="chartHoras"></canvas></div>
             </div>
-        </main>
+            <div class="chart-card">
+                <h3><i class="ti ti-trophy"></i>Top 10 clientes — accesos este mes</h3>
+                <div class="chart-wrap"><canvas id="chartTopClientes"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3><i class="ti ti-chart-pie"></i>Resultados de accesos (último mes)</h3>
+                <div class="chart-wrap"><canvas id="chartResultados"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3><i class="ti ti-tags"></i>Accesos por disciplina (último mes)</h3>
+                <div class="chart-wrap"><canvas id="chartDisciplinas"></canvas></div>
+            </div>
+            <div class="chart-card" style="grid-column: 1 / -1">
+                <h3><i class="ti ti-trending-up"></i>Accesos — últimos 14 días</h3>
+                <div class="chart-wrap" style="height:200px;"><canvas id="chartLinea"></canvas></div>
+            </div>
+        </div>
+    </main>
+{% endblock %}
 
-        <script>
-            const PRUSSIAN = '#071f35';
-            const DUSK     = '#195083';
-            const LINEN    = '#f7eee4';
-            const SNOW     = '#fcf9f6';
+{% block scripts %}
+    <script>
+        const PRUSSIAN = '#071f35';
+        const DUSK     = '#195083';
+        const PALETTE = ['#195083','#0f3a60','#2e7d32','#b45309','#5b21b6','#a32d2d','#0e7490','#15803d','#92400e','#6d28d9'];
 
-            const PALETTE = [
-                '#195083', '#0f3a60', '#2e7d32', '#b45309',
-                '#5b21b6', '#a32d2d', '#0e7490', '#15803d',
-                '#92400e', '#6d28d9'
-            ];
+        Chart.defaults.font.family = 'sans-serif';
+        Chart.defaults.font.size   = 12;
+        Chart.defaults.color       = '#555';
 
-            Chart.defaults.font.family = 'sans-serif';
-            Chart.defaults.font.size   = 12;
-            Chart.defaults.color       = '#555';
+        const diasLabels     = {{ datos.dias_semana_labels | tojson }};
+        const diasData       = {{ datos.dias_semana_data   | tojson }};
+        const horasLabels    = {{ datos.horas_labels        | tojson }};
+        const horasData      = {{ datos.horas_data          | tojson }};
+        const topNombres     = {{ datos.top_clientes_nombres | tojson }};
+        const topCounts      = {{ datos.top_clientes_counts  | tojson }};
+        const resLabels      = {{ datos.resultados_labels    | tojson }};
+        const resData        = {{ datos.resultados_data      | tojson }};
+        const lineaLabels    = {{ datos.linea_labels         | tojson }};
+        const lineaData      = {{ datos.linea_data           | tojson }};
+        const discLabels     = {{ datos.disciplina_labels | tojson }};
+        const discData       = {{ datos.disciplina_data   | tojson }};
 
-            // ── datos desde Flask ──
-            const diasLabels     = {{ datos.dias_semana_labels | tojson }};
-            const diasData       = {{ datos.dias_semana_data   | tojson }};
-            const horasLabels    = {{ datos.horas_labels        | tojson }};
-            const horasData      = {{ datos.horas_data          | tojson }};
-            const topNombres     = {{ datos.top_clientes_nombres | tojson }};
-            const topCounts      = {{ datos.top_clientes_counts  | tojson }};
-            const resLabels      = {{ datos.resultados_labels    | tojson }};
-            const resData        = {{ datos.resultados_data      | tojson }};
-            const lineaLabels    = {{ datos.linea_labels         | tojson }};
-            const lineaData      = {{ datos.linea_data           | tojson }};
+        new Chart(document.getElementById('chartDias'), {
+            type: 'bar',
+            data: { labels: diasLabels, datasets: [{ label: 'Accesos', data: diasData, backgroundColor: DUSK, borderRadius: 4 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#eee' } }, x: { grid: { display: false } } } }
+        });
 
-            // ── Días de la semana ──
-            new Chart(document.getElementById('chartDias'), {
-                type: 'bar',
-                data: {
-                    labels: diasLabels,
-                    datasets: [{ label: 'Accesos', data: diasData,
-                        backgroundColor: DUSK, borderRadius: 4 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, grid: { color: '#eee' } },
-                              x: { grid: { display: false } } } }
-            });
+        new Chart(document.getElementById('chartHoras'), {
+            type: 'bar',
+            data: { labels: horasLabels, datasets: [{ label: 'Accesos', data: horasData, backgroundColor: '#2e7d32', borderRadius: 4 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#eee' } }, x: { grid: { display: false } } } }
+        });
 
-            // ── Horas del día ──
-            new Chart(document.getElementById('chartHoras'), {
-                type: 'bar',
-                data: {
-                    labels: horasLabels,
-                    datasets: [{ label: 'Accesos', data: horasData,
-                        backgroundColor: '#2e7d32', borderRadius: 4 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, grid: { color: '#eee' } },
-                              x: { grid: { display: false } } } }
-            });
+        new Chart(document.getElementById('chartTopClientes'), {
+            type: 'bar',
+            data: { labels: topNombres, datasets: [{ label: 'Accesos', data: topCounts, backgroundColor: PALETTE.slice(0, topNombres.length), borderRadius: 4 }] },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, grid: { color: '#eee' } }, y: { grid: { display: false } } } }
+        });
 
-            // ── Top clientes ──
-            new Chart(document.getElementById('chartTopClientes'), {
-                type: 'bar',
-                data: {
-                    labels: topNombres,
-                    datasets: [{ label: 'Accesos', data: topCounts,
-                        backgroundColor: PALETTE.slice(0, topNombres.length), borderRadius: 4 }]
-                },
-                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { x: { beginAtZero: true, grid: { color: '#eee' } },
-                              y: { grid: { display: false } } } }
-            });
+        new Chart(document.getElementById('chartResultados'), {
+            type: 'doughnut',
+            data: { labels: resLabels, datasets: [{ data: resData, backgroundColor: ['#2e7d32','#a32d2d','#b45309'], borderWidth: 2, borderColor: '#fff' }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
 
-            // ── Torta resultados ──
-            new Chart(document.getElementById('chartResultados'), {
-                type: 'doughnut',
-                data: {
-                    labels: resLabels,
-                    datasets: [{ data: resData,
-                        backgroundColor: ['#2e7d32', '#a32d2d', '#b45309'],
-                        borderWidth: 2, borderColor: '#fff' }]
-                },
-                options: { responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom' } } }
-            });
+        new Chart(document.getElementById('chartDisciplinas'), {
+            type: 'bar',
+            data: { labels: discLabels, datasets: [{ label: 'Accesos', data: discData, backgroundColor: '#5b21b6', borderRadius: 4 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#eee' } }, x: { grid: { display: false } } } }
+        });
 
-            // ── Línea 14 días ──
-            new Chart(document.getElementById('chartLinea'), {
-                type: 'line',
-                data: {
-                    labels: lineaLabels,
-                    datasets: [{ label: 'Accesos', data: lineaData,
-                        borderColor: DUSK, backgroundColor: 'rgba(25,80,131,0.08)',
-                        tension: 0.3, fill: true, pointRadius: 4,
-                        pointBackgroundColor: DUSK }]
-                },
-                options: { responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, grid: { color: '#eee' } },
-                              x: { grid: { display: false } } } }
-            });
-        </script>
-    </body>
-</html>
+        new Chart(document.getElementById('chartLinea'), {
+            type: 'line',
+            data: { labels: lineaLabels, datasets: [{ label: 'Accesos', data: lineaData, borderColor: DUSK, backgroundColor: 'rgba(25,80,131,0.08)', tension: 0.3, fill: true, pointRadius: 4, pointBackgroundColor: DUSK }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#eee' } }, x: { grid: { display: false } } } }
+        });
+    </script>
+{% endblock %}

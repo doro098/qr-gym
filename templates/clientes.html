@@ -1,25 +1,8 @@
-<!doctype html>
-<html>
-<head>
-    <title>Clientes — QR-GYM</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <header style="display:flex; align-items:center; justify-content:space-between; padding:1rem 1.5rem; background:var(--prussian-blue); box-shadow:0 2px 8px rgba(7,31,53,0.15);">
-        <a href="{{ url_for('inicio') }}" style="display:flex; align-items:center; gap:10px; font-size:20px; font-weight:500; color:var(--white); text-decoration:none;">
-            <i class="ti ti-qrcode" style="font-size:28px; color:var(--linen);"></i>QR-GYM
-        </a>
-        <div style="display:flex; gap:8px; align-items:center;">
-            <a href="{{ url_for('inicio') }}" class="nav-btn"><i class="ti ti-home"></i>Inicio</a>
-            <a href="{{ url_for('listar_clientes_html') }}" class="nav-btn active"><i class="ti ti-users"></i>Clientes</a>
-            <a href="{{ url_for('mostrar_actividad') }}" class="nav-btn"><i class="ti ti-history"></i>Actividad</a>
-            <a href="{{ url_for('mostrar_vencimientos') }}" class="nav-btn"><i class="ti ti-calendar-event"></i>Vencimientos</a>
-            <a href="{{ url_for('mostrar_estadisticas') }}" class="nav-btn"><i class="ti ti-chart-bar"></i>Estadísticas</a>
-            <a href="{{ url_for('logout') }}" class="nav-btn logout"><i class="ti ti-logout"></i>Salir</a>
-        </div>
-    </header>
+{% extends "base.html" %}
 
+{% block title %}Clientes — QR-GYM{% endblock %}
+
+{% block content %}
     <div class="subheader">
         <h2>Clientes del gimnasio</h2>
         <div style="display:flex; gap:8px;">
@@ -33,12 +16,12 @@
     </div>
 
     <main>
-    <div style="padding: 0.75rem 0 0.5rem;">
-        <input type="text" id="buscador"
-            placeholder="Buscar por nombre, apellido, ID, teléfono..."
-            style="width:100%; padding:10px 14px; border:1px solid #ddd; border-radius:6px; font-size:14px; font-family:sans-serif; background:var(--white);"
-            oninput="filtrarTabla(this.value)">
-    </div>
+        <div style="padding: 0.75rem 0 0.5rem;">
+            <input type="text" id="buscador"
+                placeholder="Buscar por nombre, apellido, ID, teléfono..."
+                style="width:100%; padding:10px 14px; border:1px solid #ddd; border-radius:6px; font-size:14px; font-family:sans-serif; background:var(--white);"
+                oninput="filtrarTabla(this.value)">
+        </div>
         <table>
             <thead>
                 <tr>
@@ -72,43 +55,45 @@
             </tbody>
         </table>
     </main>
-</body>
-<script>
-    document.querySelectorAll("thead th").forEach((th, col) => {
-        if (th.textContent.trim() === "Acciones") return;
-        th.style.cursor = "pointer";
-        th.style.userSelect = "none";
-        let asc = true;
-        th.addEventListener("click", () => {
-            const tbody = document.querySelector("tbody");
-            const filas = Array.from(tbody.querySelectorAll("tr"));
-            filas.sort((a, b) => {
-                const aVal = a.querySelectorAll("td")[col].textContent.trim();
-                const bVal = b.querySelectorAll("td")[col].textContent.trim();
-                const aFecha = Date.parse(aVal);
-                const bFecha = Date.parse(bVal);
-                if (!isNaN(aFecha) && !isNaN(bFecha)) return asc ? aFecha - bFecha : bFecha - aFecha;
-                const aNum = parseFloat(aVal.replace(/\D/g, ""));
-                const bNum = parseFloat(bVal.replace(/\D/g, ""));
-                if (!isNaN(aNum) && !isNaN(bNum)) return asc ? aNum - bNum : bNum - aNum;
-                return asc ? aVal.localeCompare(bVal, "es") : bVal.localeCompare(aVal, "es");
-            });
-            filas.forEach((f) => tbody.appendChild(f));
-            document.querySelectorAll("thead th").forEach((t) => { t.textContent = t.textContent.replace(/ [▲▼]$/, ""); });
-            th.textContent += asc ? " ▲" : " ▼";
-            asc = !asc;
-        });
-    });
+{% endblock %}
 
-    function filtrarTabla(query) {
-        const q = query.toLowerCase().trim();
-        document.querySelectorAll('tbody tr').forEach(tr => {
-            const texto = Array.from(tr.querySelectorAll('td'))
-                .slice(0, -1)
-                .map(td => td.textContent.toLowerCase())
-                .join(' ');
-            tr.style.display = texto.includes(q) ? '' : 'none';
+{% block scripts %}
+    <script>
+        document.querySelectorAll("thead th").forEach((th, col) => {
+            if (th.textContent.trim() === "Acciones") return;
+            th.style.cursor = "pointer";
+            th.style.userSelect = "none";
+            let asc = true;
+            th.addEventListener("click", () => {
+                const tbody = document.querySelector("tbody");
+                const filas = Array.from(tbody.querySelectorAll("tr"));
+                filas.sort((a, b) => {
+                    const aVal = a.querySelectorAll("td")[col].textContent.trim();
+                    const bVal = b.querySelectorAll("td")[col].textContent.trim();
+                    const aFecha = Date.parse(aVal);
+                    const bFecha = Date.parse(bVal);
+                    if (!isNaN(aFecha) && !isNaN(bFecha)) return asc ? aFecha - bFecha : bFecha - aFecha;
+                    const aNum = parseFloat(aVal.replace(/\D/g, ""));
+                    const bNum = parseFloat(bVal.replace(/\D/g, ""));
+                    if (!isNaN(aNum) && !isNaN(bNum)) return asc ? aNum - bNum : bNum - aNum;
+                    return asc ? aVal.localeCompare(bVal, "es") : bVal.localeCompare(aVal, "es");
+                });
+                filas.forEach((f) => tbody.appendChild(f));
+                document.querySelectorAll("thead th").forEach((t) => { t.textContent = t.textContent.replace(/ [▲▼]$/, ""); });
+                th.textContent += asc ? " ▲" : " ▼";
+                asc = !asc;
+            });
         });
-    }
-</script>
-</html>
+
+        function filtrarTabla(query) {
+            const q = query.toLowerCase().trim();
+            document.querySelectorAll('tbody tr').forEach(tr => {
+                const texto = Array.from(tr.querySelectorAll('td'))
+                    .slice(0, -1)
+                    .map(td => td.textContent.toLowerCase())
+                    .join(' ');
+                tr.style.display = texto.includes(q) ? '' : 'none';
+            });
+        }
+    </script>
+{% endblock %}

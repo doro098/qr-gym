@@ -1,137 +1,118 @@
+#!/usr/bin/env python3
 """
-Bucle principal del control de acceso del gimnasio.
-
-Orquesta:
-1. ScannerQR   → lee el QR de la cámara (devuelve un texto)
-2. validar     → comprueba que sea un NanoId válido de 6 chars
-3. verificar   → lookup en DB por codigo_qr, comprueba vencimiento
-4. registrar   → deja log del resultado (EXITO / DENEGADO / ERROR)
-5. cerradura   → si todo OK, abre el GPIO por 1 segundo
-
-Entradas:
-- QR válido y cliente vigente → abre cerradura + log EXITO
-- QR válido pero cliente vencido → log DENEGADO
-- QR no reconocido o formato inválido → log ERROR/DENEGADO
-
-Para ejecutar en la Raspberry:
-    python hardware/acceso.py
-o
-    python -m hardware.acceso
+Bucle principal de control de acceso.
 """
 import sys
+import time
 from pathlib import Path
-
-# Añadir la carpeta raíz del proyecto al path de módulos
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import time
-
 from config import DEBOUNCE_SEGUNDOS, PIN_CERRADURA, TIEMPO_CERRADURA
-from db.repo_clientes import cliente_tiene_acceso_por_codigo
+from db.repo_clientes import verificar_acceso_completo
 from db.repo_logs import registrar_evento
 from hardware.cerradura import ControlCerradura
 from hardware.scanner import ScannerQR
 
-LONGITUD_NANOID = 6  # longitud esperada del codigo_qr
+LONGITUD_NANOID = 6
 
 
 def codigo_es_valido(codigo):
-    """
-    Validación ligera del NanoId escaneado.
-    No es estricta (no conocemos el alfabeto exacto que podría haberse usado),
-    pero filtra obvios errores: vacío, longitud incorrecta, o cosas que claramente
-    no son un NanoId (ej: el QR viejo "Cliente ID: 5\nNombre: Juan").
-    """
     if not codigo:
         return False
     codigo = codigo.strip()
     if len(codigo) != LONGITUD_NANOID:
         return False
-    # Aceptamos el alfabeto estándar de NanoId: A-Za-z0-9_-
     return all(c.isalnum() or c in "_-" for c in codigo)
 
 
-def verificar_acceso(codigo_qr):
+def procesar_qr(codigo, cerradura, estado_anterior):
     """
-    Lookup directo por codigo_qr (NanoId). Devuelve (permitido, mensaje, cliente_id).
-    cliente_id se usa para registrar el evento en logs (la FK sigue siendo entera).
+    Evalúa el QR, muestra el resultado en consola, registra log SOLO si el estado cambia,
+    y abre la puerta si el acceso es permitido.
     """
-    permitido, cliente = cliente_tiene_acceso_por_codigo(codigo_qr)
-    if not cliente:
-        return False, f"QR no reconocido: {codigo_qr}", None
-
-    nombre = cliente["nombre"]
-    vencimiento = cliente.get("vencimiento") or "Sin fecha"
-    cliente_id = cliente["id"]
-
-    if not permitido:
-        return False, f"ACCESO DENEGADO — {nombre} (vencido: {vencimiento})", cliente_id
-    return True, f"ACCESO PERMITIDO — {nombre} (vence: {vencimiento})", cliente_id
-
-
-def procesar_qr(codigo, cerradura):
-    """Procesa el texto escaneado por el scanner."""
     if not codigo_es_valido(codigo):
-        print(f"❌ QR inválido (no es un NanoId de {LONGITUD_NANOID} chars): {codigo[:60]!r}")
+        nuevo_permitido = False
+        nuevo_mensaje = f"QR inválido: {codigo[:60]}"
+        nuevo_resultado = "ERROR"
+        cliente_id = None
+        disciplina = None
+    else:
+        permitido, mensaje, cliente_id, disciplina = verificar_acceso_completo(codigo.strip())
+        nuevo_permitido = permitido
+        nuevo_mensaje = mensaje
+        nuevo_resultado = "EXITO" if permitido else "DENEGADO"
+
+    # Mostrar en consola (se ve en journalctl)
+    icono = "✅" if nuevo_permitido else "⛔"
+    print(f"{icono} {nuevo_mensaje}")
+
+    # Lógica de estado para evitar logs duplicados
+    anterior = estado_anterior.get(codigo)  # (permitido, disciplina)
+    if anterior is None or (anterior[0] != nuevo_permitido or anterior[1] != disciplina):
         registrar_evento(
             tipo="ACCESO",
-            descripcion=f"QR inválido: {codigo[:60]}",
-            resultado="ERROR",
+            descripcion=nuevo_mensaje,
+            resultado=nuevo_resultado,
+            cliente_id=cliente_id,
+            disciplina=disciplina,
         )
-        return
+        estado_anterior[codigo] = (nuevo_permitido, disciplina)
 
-    permitido, mensaje, cliente_id = verificar_acceso(codigo.strip())
-    print(f"{'✅' if permitido else '⛔'} {mensaje}")
-    registrar_evento(
-        tipo="ACCESO",
-        descripcion=mensaje,
-        resultado="EXITO" if permitido else "DENEGADO",
-        cliente_id=cliente_id,
-    )
-    if permitido:
+    # Abrir la puerta si está permitido (siempre, aunque no se registre log)
+    if nuevo_permitido:
         cerradura.abrir_cerradura()
 
 
 def main():
     print("=" * 50)
     print("  CONTROL DE ACCESO - GIMNASIO (GPIO / HEADLESS)")
-    print("  QR basado en NanoId de 6 chars")
+    print("  QR basado en NanoId de 6 chars + disciplinas")
     print("=" * 50)
     print(f"GPIO cerradura : {PIN_CERRADURA}")
+    print(f"Debounce       : {DEBOUNCE_SEGUNDOS} s")
     print("Para salir presiona Ctrl+C")
     print("-" * 50)
 
-    scanner = ScannerQR()
-    cerradura = ControlCerradura(pin=PIN_CERRADURA, tiempo_activacion=TIEMPO_CERRADURA)
-
-    if not scanner.iniciar():
-        print("❌ Error con cámara")
-        return
-
-    cerradura.conectar()
-
-    ultimo_codigo = ""
-    ultimo_tiempo = 0
-    escaneos = 0
+    scanner = None
+    cerradura = None
 
     try:
+        scanner = ScannerQR()
+        if not scanner.iniciar():
+            print("❌ Error con cámara")
+            return
+
+        cerradura = ControlCerradura(pin=PIN_CERRADURA, tiempo_activacion=TIEMPO_CERRADURA)
+        cerradura.conectar()
+
+        ultimo_codigo = ""
+        ultimo_tiempo = 0
+        escaneos = 0
+        estado_anterior = {}  # codigo -> (permitido, disciplina)
+
         while True:
             codigo = scanner.escanear()
             if codigo:
                 ahora = time.time()
-                if codigo == ultimo_codigo and ahora - ultimo_tiempo < DEBOUNCE_SEGUNDOS:
+                # Debounce configurable (desde config.py)
+                if DEBOUNCE_SEGUNDOS > 0 and codigo == ultimo_codigo and (ahora - ultimo_tiempo) < DEBOUNCE_SEGUNDOS:
                     continue
                 ultimo_codigo = codigo
                 ultimo_tiempo = ahora
                 escaneos += 1
                 print(f"\n🎯 Escaneo #{escaneos}")
-                procesar_qr(codigo, cerradura)
-            time.sleep(0.05)   # evita saturar CPU
+                procesar_qr(codigo, cerradura, estado_anterior)
+            time.sleep(0.05)
+
     except KeyboardInterrupt:
         print("\n⚠️ Interrumpido")
+    except Exception as e:
+        print(f"❌ Error inesperado: {e}")
     finally:
-        scanner.cerrar()
-        cerradura.desconectar()
+        if scanner:
+            scanner.cerrar()
+        if cerradura:
+            cerradura.desconectar()
         print("✅ Sistema cerrado")
 
 
