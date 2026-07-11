@@ -6,15 +6,15 @@
     <div class="subheader">
         <h2>
             <i class="ti ti-history"></i>Actividad del sistema
-            <span class="count-chip">{{ logs|length }} eventos</span>
+            <span class="count-chip">{{ total }} eventos</span>
         </h2>
         <div style="display:flex; gap:12px; align-items:center;">
-            <span class="refresh-indicator"><i class="ti ti-refresh"></i>Auto-refresh: 30s</span>
             <a href="{{ url_for('mostrar_actividad') }}" class="nav-btn secondary"><i class="ti ti-refresh"></i>Refrescar</a>
         </div>
     </div>
 
     <main>
+
         <table>
             <thead>
                 <tr>
@@ -57,18 +57,38 @@
                     <td colspan="6">
                         <div class="empty-state">
                             <i class="ti ti-history-off"></i>
-                            No hay eventos registrados aún.
+                            No hay eventos en este día.
                         </div>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-    </main>
-{% endblock %}
 
-{% block scripts %}
-    <script>
-        setTimeout(function() { location.reload(); }, 30000);
-    </script>
+        <!-- PAGINACIÓN por días -->
+        {% if total_pages > 1 %}
+        <div style="display: flex; justify-content: center; gap: 8px; margin-top: 1.5rem; flex-wrap: wrap;">
+            {% if page > 1 %}
+                <a href="{{ url_for('mostrar_actividad', page=page-1) }}" class="nav-btn secondary"><i class="ti ti-chevron-left"></i> Anterior</a>
+            {% endif %}
+
+            {% for p in range(1, total_pages + 1) %}
+                {% if p == page %}
+                    <span class="nav-btn active" style="background: var(--dusk-blue); color: white; cursor: default;">{{ p }}</span>
+                {% elif p == 1 or p == total_pages or (p >= page-3 and p <= page+3) %}
+                    <a href="{{ url_for('mostrar_actividad', page=p) }}" class="nav-btn secondary">{{ p }}</a>
+                {% elif p == page-4 or p == page+4 %}
+                    <span style="color: #999;">…</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if page < total_pages %}
+                <a href="{{ url_for('mostrar_actividad', page=page+1) }}" class="nav-btn secondary">Siguiente <i class="ti ti-chevron-right"></i></a>
+            {% endif %}
+        </div>
+        <div style="text-align: center; margin-top: 0.5rem; font-size: 13px; color: #888;">
+            Página {{ page }} de {{ total_pages }} (días con actividad)
+        </div>
+        {% endif %}
+    </main>
 {% endblock %}

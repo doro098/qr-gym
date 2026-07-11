@@ -15,10 +15,16 @@ from db.repo_clientes import (
     get_cliente_por_id,
     obtener_clientes_vencidos,
     obtener_vencimientos_proximos,
-    verificar_acceso_completo,          # NUEVA
+    verificar_acceso_completo,
 )
-from db.repo_logs import obtener_historial, registrar_evento
-from db.repo_disciplinas import (      # NUEVO
+from db.repo_logs import (
+    obtener_historial,
+    registrar_evento,
+    contar_logs,
+    obtener_dias_con_logs,
+    obtener_logs_por_dia
+)
+from db.repo_disciplinas import (
     crear_disciplina,
     obtener_disciplinas,
     obtener_disciplina_por_id,
@@ -50,12 +56,14 @@ __all__ = [
     "get_cliente_por_id",
     "obtener_clientes_vencidos",
     "obtener_vencimientos_proximos",
-    "verificar_acceso_completo",          # NUEVA
+    "verificar_acceso_completo",
     "obtener_historial",
     "registrar_evento",
+    "contar_logs",
+    "obtener_dias_con_logs",
+    "obtener_logs_por_dia",
     "obtener_datos_inicio",
     "obtener_estadisticas",
-    # Nuevas disciplinas
     "crear_disciplina",
     "obtener_disciplinas",
     "obtener_disciplina_por_id",
