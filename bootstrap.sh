@@ -28,7 +28,7 @@ if [ "$RUN_USER" = "root" ]; then
 fi
 
 # URL del repositorio (público)
-REPO_URL="https://github.com/doro098/qr-gym/tree/beta"   # <--- CAMBIAR POR LA URL REAL
+REPO_URL="https://github.com/doro098/qr-gym/"   # <--- CAMBIAR POR LA URL REAL
 
 # =============================================================================
 #  1. Instalar dependencias del sistema
