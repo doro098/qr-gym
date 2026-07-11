@@ -1,0 +1,784 @@
+/* ============================================================
+   VARIABLES GLOBALES
+   ============================================================ */
+:root {
+    --white: #fdfcfbff;
+    --bright-snow: #fcf9f6ff;
+    --prussian-blue: #071f35ff;
+    --linen: #f7eee4ff;
+    --dusk-blue: #195083ff;
+    --dusk-blue-dark: #0f3a60;
+}
+
+/* ============================================================
+   RESET Y BASE
+   ============================================================ */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--linen);
+    font-family: sans-serif;
+}
+
+/* ============================================================
+   CABECERA Y NAVEGACIÓN
+   ============================================================ */
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: var(--prussian-blue);
+    box-shadow: 0 2px 8px rgba(7, 31, 53, 0.15);
+}
+
+header a.logo-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--white);
+    text-decoration: none;
+}
+
+header a.logo-link i {
+    font-size: 28px;
+    color: var(--linen);
+}
+
+.nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 16px;
+    background: var(--dusk-blue);
+    color: var(--white);
+    text-decoration: none;
+    font-size: 14px;
+    white-space: nowrap;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.nav-btn i {
+    font-size: 16px;
+}
+
+.nav-btn:hover {
+    background: var(--dusk-blue-dark);
+}
+
+.nav-btn.active {
+    background: var(--white);
+    color: var(--prussian-blue);
+}
+
+.nav-btn.active:hover {
+    background: var(--linen);
+    color: var(--prussian-blue);
+}
+
+.nav-btn.logout {
+    background: #a32d2d;
+}
+
+.nav-btn.logout:hover {
+    background: #7a1f1f;
+}
+
+.nav-btn.secondary {
+    background: var(--prussian-blue);
+}
+
+.nav-btn.secondary:hover {
+    background: #040f1c;
+}
+
+/* ============================================================
+   SUBHEADER
+   ============================================================ */
+.subheader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: var(--bright-snow);
+    border-bottom: 1px solid var(--linen);
+}
+
+.subheader h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--prussian-blue);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.subheader h2 small {
+    font-size: 14px;
+    color: #666;
+}
+
+.count-chip {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    background: var(--linen);
+    color: var(--prussian-blue);
+    font-size: 13px;
+    font-weight: 500;
+    margin-left: 8px;
+}
+
+.refresh-indicator {
+    font-size: 12px;
+    color: #999;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* ============================================================
+   MAIN Y CONTENEDORES
+   ============================================================ */
+main {
+    padding: 0.75rem 1.5rem 2rem;
+}
+
+/* ============================================================
+   TABLAS
+   ============================================================ */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    background: var(--white);
+}
+
+thead tr {
+    background: var(--prussian-blue);
+}
+
+thead th {
+    padding: 10px 14px;
+    text-align: left;
+    color: var(--linen);
+    font-weight: 500;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+tbody tr {
+    border-bottom: 1px solid var(--linen);
+    background: var(--white);
+}
+
+tbody tr:nth-child(even) {
+    background: var(--bright-snow);
+}
+
+tbody tr:hover {
+    background: var(--linen);
+}
+
+tbody td {
+    padding: 10px 14px;
+    color: var(--prussian-blue);
+    vertical-align: middle;
+}
+
+/* Estados de filas según resultado */
+tr.log-exito td {
+    background: #e8f5e9 !important;
+}
+tr.log-denegado td {
+    background: #fde8e8 !important;
+}
+tr.log-error td {
+    background: #fff3e0 !important;
+}
+
+tr.vencido td {
+    background: #fde8e8 !important;
+}
+tr.proximo td {
+    background: #fef9e7 !important;
+}
+
+tr.dias-pocos td {
+    background: #fde8e8 !important;
+}
+tr.dias-muchos td {
+    background: #fef9e7 !important;
+}
+
+/* ============================================================
+   BADGES
+   ============================================================ */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-exito {
+    background: #2e7d32;
+    color: #fff;
+}
+.badge-denegado {
+    background: #a32d2d;
+    color: #fff;
+}
+.badge-error {
+    background: #b45309;
+    color: #fff;
+}
+.badge-acceso {
+    background: #5b21b6;
+    color: #fff;
+}
+.badge-sistema {
+    background: var(--dusk-blue);
+    color: #fff;
+}
+
+/* ============================================================
+   BOTONES DE ACCIÓN (tablas)
+   ============================================================ */
+.acciones {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.acc-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border: none;
+    border-radius: 6px;
+    background: var(--dusk-blue);
+    color: var(--white);
+    font-size: 12px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.acc-btn i {
+    font-size: 14px;
+}
+
+.acc-btn:hover {
+    background: var(--dusk-blue-dark);
+}
+
+.acc-btn.danger {
+    background: #a32d2d;
+}
+
+.acc-btn.danger:hover {
+    background: #7a1f1f;
+}
+
+/* ============================================================
+   FORMULARIOS
+   ============================================================ */
+.form-card {
+    background: var(--white);
+    max-width: 520px;
+    margin: 2rem auto;
+    padding: 2rem;
+}
+
+.form-card h2 {
+    margin: 0 0 1.5rem;
+    font-size: 20px;
+    color: var(--prussian-blue);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--prussian-blue);
+    font-weight: 500;
+    font-size: 14px;
+}
+
+input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: sans-serif;
+    transition: all 0.2s;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--dusk-blue);
+    box-shadow: 0 0 0 3px rgba(25, 80, 131, 0.1);
+    background: var(--bright-snow);
+}
+
+.form-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 1.5rem;
+}
+
+.btn-submit {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    background: var(--dusk-blue);
+    color: var(--white);
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-submit:hover {
+    background: var(--dusk-blue-dark);
+}
+
+.btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    background: transparent;
+    color: var(--prussian-blue);
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.btn-cancel:hover {
+    background: var(--linen);
+}
+
+/* ============================================================
+   BUSCADOR
+   ============================================================ */
+#buscador {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: sans-serif;
+    background: var(--white);
+    margin-bottom: 0.5rem;
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #999;
+}
+
+.empty-state i {
+    font-size: 40px;
+    display: block;
+    margin-bottom: 10px;
+}
+
+/* ============================================================
+   INICIO – HERO, CARDS, QUICK STATS
+   ============================================================ */
+.hero {
+    background: var(--prussian-blue);
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    color: var(--white);
+}
+
+.hero h1 {
+    margin: 0 0 6px;
+    font-size: 26px;
+    font-weight: 500;
+}
+
+.hero p {
+    margin: 0;
+    color: #8aabcc;
+    font-size: 14px;
+}
+
+.section-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 0.75rem;
+}
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.card {
+    background: var(--white);
+    border-radius: 8px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-decoration: none;
+    border: 0.5px solid #e2d8ce;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.card:hover {
+    border-color: var(--dusk-blue);
+    box-shadow: 0 2px 8px rgba(25, 80, 131, 0.1);
+}
+
+.card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: #e6f1fb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-icon i {
+    font-size: 22px;
+    color: var(--dusk-blue);
+}
+
+.card-icon.green {
+    background: #eaf3de;
+}
+.card-icon.green i {
+    color: #3b6d11;
+}
+
+.card-icon.amber {
+    background: #faeeda;
+}
+.card-icon.amber i {
+    color: #854f0b;
+}
+
+.card-icon.purple {
+    background: #eeedfe;
+}
+.card-icon.purple i {
+    color: #534ab7;
+}
+
+.card h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--prussian-blue);
+}
+
+.card p {
+    margin: 0;
+    font-size: 12px;
+    color: #888;
+    line-height: 1.5;
+}
+
+.card-stat {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.card-stat .num {
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--prussian-blue);
+}
+
+.card-stat .lbl {
+    font-size: 12px;
+    color: #aaa;
+}
+
+.quick-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.75rem;
+}
+
+.qs {
+    background: var(--white);
+    border-radius: 8px;
+    padding: 1rem;
+    border: 0.5px solid #e2d8ce;
+    text-align: center;
+}
+
+.qs .qn {
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--prussian-blue);
+}
+
+.qs .ql {
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 4px;
+}
+
+/* ============================================================
+   ESTADÍSTICAS – STAT CARDS Y GRÁFICOS
+   ============================================================ */
+.stat-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    background: var(--white);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.stat-card .label {
+    font-size: 12px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.stat-card .value {
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--prussian-blue);
+    line-height: 1;
+}
+
+.stat-card .sub {
+    font-size: 12px;
+    color: #aaa;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 1rem;
+}
+
+.chart-card {
+    background: var(--white);
+    padding: 1.25rem 1.5rem;
+}
+
+.chart-card h3 {
+    margin: 0 0 1rem;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--prussian-blue);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.chart-card h3 i {
+    color: var(--dusk-blue);
+}
+
+.chart-wrap {
+    position: relative;
+    height: 260px;
+}
+
+.chart-card .chart-wrap.altura-chica {
+    height: 200px;
+}
+
+/* ============================================================
+   LOGIN (estilo específico)
+   ============================================================ */
+body.login-page {
+    background: linear-gradient(135deg, var(--prussian-blue) 0%, var(--dusk-blue) 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.login-container {
+    background: var(--white);
+    padding: 50px;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(7, 31, 53, 0.4);
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.logo i {
+    font-size: 40px;
+    color: var(--dusk-blue);
+}
+
+.logo h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--prussian-blue);
+}
+
+.subtitle {
+    font-size: 14px;
+    color: #999;
+    margin-top: 5px;
+}
+
+.messages {
+    margin-bottom: 20px;
+}
+
+.message {
+    padding: 12px 14px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.message.error {
+    background: #fde8e8;
+    color: #a32d2d;
+    border-left: 4px solid #a32d2d;
+}
+
+.message.success {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border-left: 4px solid #2e7d32;
+}
+
+.login-container .form-group {
+    margin-bottom: 20px;
+}
+
+.login-container label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--prussian-blue);
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.login-container input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: sans-serif;
+    transition: all 0.3s ease;
+}
+
+.login-container input:focus {
+    outline: none;
+    border-color: var(--dusk-blue);
+    box-shadow: 0 0 0 3px rgba(25, 80, 131, 0.1);
+    background: var(--bright-snow);
+}
+
+.login-container .form-actions {
+    margin-top: 30px;
+}
+
+.login-container button {
+    width: 100%;
+    padding: 12px;
+    background: var(--dusk-blue);
+    color: var(--white);
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.login-container button:hover {
+    background: var(--dusk-blue-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(25, 80, 131, 0.3);
+}
+
+.login-container button:active {
+    transform: translateY(0);
+}
+
+.login-container button i {
+    font-size: 16px;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 12px;
+    color: #999;
+}
