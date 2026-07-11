@@ -109,12 +109,16 @@ def cliente_tiene_acceso_por_codigo(codigo_qr):
 # ========== NUEVA: Verificación completa (vencimiento + disciplina) ==========
 def verificar_acceso_completo(codigo_qr):
     """
-    Verifica:
-    1. Que el cliente exista.
-    2. Que su vencimiento sea hoy o futuro (o NULL).
-    3. Si el cliente tiene disciplinas asignadas, que al menos una esté activa
-       en el momento actual.
-    Si no tiene disciplinas, solo se exige el vencimiento (acceso libre).
+    Verifica acceso de un cliente según su código QR.
+
+    Reglas:
+    1. El cliente debe existir.
+    2. Vencimiento: si tiene fecha, debe ser >= hoy; si es NULL, se considera vigente.
+    3. Disciplinas:
+       - Si el cliente NO tiene disciplinas asignadas → acceso libre (solo vencimiento).
+       - Si tiene disciplinas, al menos una debe tener un horario activo
+         en el día y hora actuales.
+
     Devuelve: (permitido: bool, mensaje: str, cliente_id: int|None, disciplina_nombre: str|None)
     """
     cliente = get_cliente_por_codigo_qr(codigo_qr)
@@ -123,25 +127,25 @@ def verificar_acceso_completo(codigo_qr):
 
     cliente_id = cliente["id"]
     nombre = cliente["nombre"]
-    vencimiento = cliente.get("vencimiento") or "Sin fecha"
+    vencimiento = cliente.get("vencimiento")
 
-    # 1. Verificar vencimiento
-    if not cliente_tiene_acceso(cliente_id):
+    # --- Verificar vencimiento ---
+    if vencimiento is not None and vencimiento < datetime.now().date().isoformat():
         return False, f"ACCESO DENEGADO — {nombre} (vencido: {vencimiento})", cliente_id, None
 
-    # 2. Obtener disciplinas del cliente
+    # Vencimiento OK (NULL o fecha futura)
+    # --- Verificar disciplinas ---
     disciplinas = obtener_disciplinas_de_cliente(cliente_id)
     if not disciplinas:
-        # Sin disciplinas: acceso libre (solo vencimiento)
-        return True, f"ACCESO PERMITIDO — {nombre} (vence: {vencimiento})", cliente_id, None
+        # Sin disciplinas → acceso libre
+        return True, f"ACCESO PERMITIDO — {nombre} (vence: {vencimiento or 'sin fecha'})", cliente_id, None
 
-    # 3. Verificar si alguna disciplina está activa
+    # Tiene disciplinas → verificar si alguna está activa ahora
     tiene_activa, nombre_disciplina = cliente_tiene_disciplina_activa(cliente_id)
     if tiene_activa:
-        return True, f"ACCESO PERMITIDO — {nombre} ({nombre_disciplina})", cliente_id, nombre_disciplina
+        return True, f"ACCESO PERMITIDO — {nombre} ({nombre_disciplina} activa)", cliente_id, nombre_disciplina
     else:
         return False, f"ACCESO DENEGADO — {nombre} (ninguna disciplina activa)", cliente_id, None
-
 
 # ========== Listados de vencimientos ==========
 def obtener_vencimientos_proximos(dias=7):
